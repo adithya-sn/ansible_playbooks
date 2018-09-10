@@ -1,0 +1,56 @@
+---
+
+- connection: ssh
+  hosts: all
+  gather_facts: false
+  become: yes
+  serial: 1
+
+  vars:
+    ansible_ssh_port: 22
+
+  tasks:
+
+  - name: Get the instance ID
+    ec2_instance_facts:
+      region: ap-southeast-1
+      filters:
+        "network-interface.addresses.private-ip-address": "{{ inventory_hostname }}"
+    register: inst_id
+    delegate_to: localhost
+    run_once: true
+
+  - debug:
+      msg: "{{ inst_id.instances[0].instance_id }}"
+
+  - name: Run the python script
+    script: "{{ playbook_dir }}/tg_name_current.py {{ inst_id.instances[0].instance_id }}"
+    args:
+      executable: python
+    register: target_grp
+    delegate_to: localhost
+
+  - debug:
+      msg: "{{ target_grp.stdout | trim }}"
+    ignore_errors: true
+
+  - elb_target:
+      target_group_name: "{{ target_grp.stdout | trim }}"
+      target_id: "{{ inst_id.instances[0].instance_id }}"
+      target_port: "{{ svc_port }}"
+      region: ap-southeast-1
+      target_status: unused
+      target_status_timeout: 360
+      state: absent
+    delegate_to: localhost
+    ignore_errors: true
+
+  - elb_target:
+      target_group_name: "{{ target_grp | trim }}"
+      target_id: "{{ inst_id.instances[0].instance_id }}"
+      target_port: "{{ svc_port }}"
+      region: ap-southeast-1
+      target_status: healthy
+      state: present
+    delegate_to: localhost
+    ignore_errors: yes

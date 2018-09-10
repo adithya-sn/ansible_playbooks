@@ -1,0 +1,22 @@
+---
+- become: yes
+  hosts: all
+  connection: ssh
+  gather_facts: no
+
+  tasks:
+    - name: Copy SSH pub key
+      authorized_key:
+        user: root
+        key: '{{ lookup ("file","~/.ssh/id_rsa1.pub" ) }}'
+      notify:
+        - reload SSH
+
+  handlers:
+    - name: reload SSH
+      service:
+        name: ssh
+        state: reloaded
+
+##copies over the public key and reload ssh##
+

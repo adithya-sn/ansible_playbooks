@@ -1,0 +1,17 @@
+---
+- become: yes
+  hosts: all
+  connection: ssh
+  gather_facts: no
+
+  tasks:
+    - name: Adds user
+      user:
+        name: "{{ user_name }}"
+        shell: /bin/bash
+        append: yes
+        uid: 3302
+        generate_ssh_key: yes
+        update_password: always
+        password: "{{ user_pw }}"
+
