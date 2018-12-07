@@ -1,0 +1,14 @@
+---
+- connection: local
+  become: yes
+  hosts: 127.0.0.1
+
+  tasks:
+    - name: modify ssh port
+      shell: sed -i '/Port*/c\Port 222' /etc/ssh/sshd_config
+
+## OR WITH THE replace MODULE ##
+#      replace:
+#        dest/path: /etc/ssh/sshd_config
+#        regexp: '^Port'
+#        replace: 'Port 222'
